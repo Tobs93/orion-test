@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ORION Systemtest</title>
+<meta name="description" content="Testseite für den Education-Breakout „Im Schatten des Mondes“: prüft Installation, Offline-Betrieb, Kamera und Sicherung auf dem iPad.">
+<meta name="theme-color" content="#0f1a33">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ORION-Test">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+  :root {
+    color-scheme: light;
+    --navy: #0f1a33;
+    --navy-2: #1c2b52;
+    --amber: #f2a541;
+    --amber-soft: #fdf1df;
+    --bg: #eef1f6;
+    --card: #ffffff;
+    --ink: #1a2033;
+    --muted: #5b6478;
+    --line: #d9dee8;
+    --ok: #1f8a4c;
+    --ok-soft: #e3f4ea;
+    --warn: #a86400;
+    --warn-soft: #fff2d9;
+    --fail: #b3261e;
+    --fail-soft: #fde7e5;
+    --open: #5b6478;
+    --open-soft: #edf0f5;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 17px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  header {
+    background: linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 100%);
+    color: #fff;
+    padding: calc(env(safe-area-inset-top) + 18px) 20px 18px;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand img { width: 52px; height: 52px; border-radius: 12px; }
+  .brand h1 { margin: 0; font-size: 1.45rem; letter-spacing: .02em; }
+  .brand p { margin: 2px 0 0; color: #c9d3ea; font-size: .95rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 11px; border-radius: 999px; font-size: .85rem;
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18); color: #fff;
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: #9aa4b8; }
+  .dot.ok { background: #4fd18b; } .dot.warn { background: var(--amber); } .dot.fail { background: #ff6b5e; }
+  main { padding: 18px 16px calc(env(safe-area-inset-bottom) + 40px); }
+  .card {
+    background: var(--card); border-radius: var(--radius); padding: 18px 18px 16px;
+    margin: 0 0 16px; box-shadow: 0 1px 2px rgba(15,26,51,.06), 0 4px 14px rgba(15,26,51,.05);
+  }
+  .card h2 { margin: 0; font-size: 1.12rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .num {
+    display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 8px;
+    background: var(--navy); color: #fff; font-size: .9rem; font-weight: 700; flex: none;
+  }
+  .badge {
+    margin-left: auto; font-size: .8rem; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+    background: var(--open-soft); color: var(--open);
+  }
+  .badge.ok { background: var(--ok-soft); color: var(--ok); }
+  .badge.warn { background: var(--warn-soft); color: var(--warn); }
+  .badge.fail { background: var(--fail-soft); color: var(--fail); }
+  .hint { color: var(--muted); font-size: .95rem; margin: 8px 0 12px; }
+  .hint b { color: var(--ink); }
+  ol.steps { margin: 6px 0 0; padding-left: 22px; }
+  ol.steps li { margin: 4px 0; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  button, .btn {
+    -webkit-appearance: none; appearance: none; font: inherit; font-weight: 600;
+    min-height: 48px; padding: 10px 18px; border-radius: 12px; border: 0; cursor: pointer;
+    background: var(--navy); color: #fff; touch-action: manipulation;
+  }
+  button.secondary { background: #e4e8f1; color: var(--ink); }
+  button.amber { background: var(--amber); color: var(--navy); }
+  button.danger { background: var(--fail-soft); color: var(--fail); }
+  button:disabled { opacity: .45; cursor: default; }
+  label.field { display: flex; flex-direction: column; gap: 4px; font-size: .9rem; color: var(--muted); }
+  select, input[type=number] {
+    font: inherit; min-height: 48px; padding: 8px 12px; border-radius: 12px;
+    border: 1px solid var(--line); background: #fff; color: var(--ink); min-width: 190px;
+  }
+  .result {
+    margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: var(--open-soft);
+    color: var(--ink); font-size: .95rem; display: none;
+  }
+  .result.show { display: block; }
+  .result.ok { background: var(--ok-soft); } .result.warn { background: var(--warn-soft); } .result.fail { background: var(--fail-soft); }
+  .check { display: flex; gap: 10px; align-items: center; margin-top: 10px; font-size: .95rem; }
+  .check input { width: 24px; height: 24px; accent-color: var(--navy); }
+  .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-top: 12px; }
+  .ph { position: relative; border-radius: 10px; overflow: hidden; background: #dde2ec; }
+  .ph img { display: block; width: 100%; height: 110px; object-fit: cover; }
+  .ph .meta { font-size: .78rem; color: var(--muted); padding: 4px 6px; background: #fff; }
+  .ph button.x {
+    position: absolute; top: 6px; right: 6px; min-height: 32px; width: 32px; padding: 0;
+    border-radius: 50%; background: rgba(15,26,51,.75); font-size: 1rem;
+  }
+  .dragzone { margin-top: 10px; }
+  .stage {
+    position: relative; width: 100%; aspect-ratio: 4 / 3; border-radius: 12px; overflow: hidden;
+    background: repeating-linear-gradient(45deg, #e3e7ef, #e3e7ef 12px, #d8dde8 12px, #d8dde8 24px);
+    display: grid; place-items: center; color: var(--muted); text-align: center;
+  }
+  .stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #1b2238; }
+  .stage .empty { position: relative; padding: 12px; font-size: .95rem; }
+  .tray { display: flex; flex-wrap: wrap; gap: 10px; min-height: 56px; margin-top: 10px; padding: 8px; border: 2px dashed var(--line); border-radius: 12px; }
+  .tag {
+    display: inline-flex; align-items: center; min-height: 44px; padding: 8px 14px; border-radius: 10px;
+    background: var(--amber); color: var(--navy); font-weight: 700; font-size: .95rem;
+    touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab;
+    box-shadow: 0 2px 6px rgba(15,26,51,.25);
+  }
+  .stage .tag { position: absolute; transform: translate(-50%, -50%); z-index: 2; white-space: nowrap; }
+  .tag.dragging { position: fixed; z-index: 50; transform: translate(-50%, -50%) scale(1.06); cursor: grabbing; }
+  table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: .85rem; }
+  pre {
+    white-space: pre-wrap; word-break: break-word; background: #f5f7fb; border-radius: 10px;
+    padding: 10px 12px; font-size: .82rem; margin: 10px 0 0; max-height: 260px; overflow: auto;
+  }
+  details summary { cursor: pointer; font-weight: 600; min-height: 32px; }
+  .small { font-size: .85rem; color: var(--muted); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } select, input[type=number] { min-width: 0; width: 100%; } }
+  footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 8px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <img src="icon-180.png" alt="">
+      <div>
+        <h1>ORION · Systemtest</h1>
+        <p>Prüft, ob dieses iPad alles kann, was die Breakout-App braucht.</p>
+      </div>
+    </div>
+    <div class="chips" aria-live="polite">
+      <span class="chip"><span class="dot" id="dotMode"></span><span id="chipMode">Modus …</span></span>
+      <span class="chip"><span class="dot" id="dotNet"></span><span id="chipNet">Netz …</span></span>
+      <span class="chip"><span class="dot" id="dotSw"></span><span id="chipSw">Offline-Speicher …</span></span>
+      <span class="chip"><span class="dot" id="dotStore"></span><span id="chipStore">Speicher …</span></span>
+    </div>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+
+  <section class="card">
+    <h2>So läuft der Test</h2>
+    <ol class="steps">
+      <li>Seite in <b>Safari</b> öffnen → <b>Teilen</b> → <b>Zum Home-Bildschirm</b>.</li>
+      <li>Die App über das neue Symbol starten (noch mit Internet), Team und Tablet wählen, Tests 4–6 und 8 durchführen.</li>
+      <li>App ganz schließen (im App-Umschalter nach oben wischen), <b>Flugmodus an</b>, App wieder über das Symbol öffnen → Tests 2, 3 und 7.</li>
+      <li>Unten bei „Ergebnis“ auf <b>Ergebnis kopieren</b> tippen und den Text an Claude schicken.</li>
+    </ol>
+    <p class="small" style="margin:10px 0 0">Vorher in der Dateien-App unter „Auf meinem iPad“ einen Ordner <b>Breakout</b> anlegen.</p>
+  </section>
+
+  <section class="card">
+    <h2>Team und Tablet</h2>
+    <p class="hint">Wie bei der Anmeldung in der App: Sternbild und Tablet-Nummer. Beides landet im Dateinamen der Sicherung.</p>
+    <div class="row">
+      <label class="field">Teamname (Sternbild)
+        <select id="team">
+          <option value="">– bitte wählen –</option>
+          <option>Orion</option><option>Kassiopeia</option><option>Großer Wagen</option><option>Andromeda</option>
+          <option>Pegasus</option><option>Leier</option><option>Schwan</option><option>Adler</option>
+          <option>Drache</option><option>Perseus</option><option>Herkules</option><option>Löwe</option>
+          <option>Zwillinge</option><option>Skorpion</option><option>Fuhrmann</option><option>Stier</option>
+        </select>
+      </label>
+      <label class="field">Tablet-Nr.
+        <input id="tablet" type="number" inputmode="numeric" min="1" max="99" placeholder="z. B. 7">
+      </label>
+    </div>
+  </section>
+
+  <section class="card" id="t-install">
+    <h2><span class="num">1</span>Installation auf dem Home-Bildschirm <span class="badge" data-badge="install">offen</span></h2>
+    <p class="hint">Wird automatisch erkannt, sobald die App über das Symbol auf dem Home-Bildschirm gestartet wurde.</p>
+    <div class="result" data-result="install"></div>
+  </section>
+
+  <section class="card" id="t-offline">
+    <h2><span class="num">2</span>Start ohne Internet <span class="badge" data-badge="offline">offen</span></h2>
+    <p class="hint">Einmal mit Internet über das Symbol öffnen und warten, bis oben „Offline-Speicher bereit“ steht. Dann App schließen, <b>Flugmodus an</b> und wieder öffnen. Startet die Seite, ist der Test bestanden.</p>
+    <div class="result" data-result="offline"></div>
+    <details style="margin-top:10px"><summary>Letzte Starts</summary><div id="startsTable" class="small"></div></details>
+  </section>
+
+  <section class="card" id="t-storage">
+    <h2><span class="num">3</span>Daten bleiben nach dem Schließen erhalten <span class="badge" data-badge="storage">offen</span></h2>
+    <p class="hint">Nach dem Neustart müssen Team, Fotos und Beschriftung noch da sein. Optional: Safari um dauerhaften Speicher bitten.</p>
+    <div class="row">
+      <button class="secondary" id="btnPersist">Dauerhaften Speicher anfordern</button>
+    </div>
+    <div class="result" data-result="storage"></div>
+  </section>
+
+  <section class="card" id="t-camera">
+    <h2><span class="num">4</span>Fotos aufnehmen <span class="badge" data-badge="camera">offen</span></h2>
+    <p class="hint">Einen Versuchsaufbau fotografieren – <b>ohne Blitz, ohne Gesichter</b>. Die App verkleinert das Foto und speichert es nur auf diesem iPad.</p>
+    <div class="row">
+      <button id="btnCam">Foto aufnehmen</button>
+      <button class="secondary" id="btnLib">Aus Fotos wählen</button>
+      <input id="camIn" type="file" accept="image/*" capture="environment" hidden>
+      <input id="libIn" type="file" accept="image/*" hidden>
+    </div>
+    <div class="result" data-result="camera"></div>
+    <div class="gallery" id="gallery"></div>
+  </section>
+
+  <section class="card" id="t-drag">
+    <h2><span class="num">5</span>Foto beschriften (Begriffe ziehen) <span class="badge" data-badge="drag">offen</span></h2>
+    <p class="hint">Zieht die drei Begriffe mit dem Finger auf euer letztes Foto. Zurück in die Ablage ziehen hebt die Platzierung auf.</p>
+    <div class="dragzone" id="dragzone">
+      <div class="stage" id="stage"><div class="empty">Noch kein Foto – erst bei Test 4 eines aufnehmen.<br>Ziehen lässt sich trotzdem testen.</div></div>
+      <div class="tray" id="tray"></div>
+    </div>
+    <div class="row" style="margin-top:10px"><button class="secondary" id="btnResetTags">Begriffe zurücksetzen</button></div>
+    <div class="result" data-result="drag"></div>
+  </section>
+
+  <section class="card" id="t-save">
+    <h2><span class="num">6</span>Spielstand sichern (wie bei der Sticker-Vergabe) <span class="badge" data-badge="save">offen</span></h2>
+    <p class="hint">Tippt auf „Spielstand sichern“, wählt im Teilen-Menü <b>In Dateien sichern</b> und dann den Ordner <b>Breakout</b>. Danach unten bestätigen, ob die Datei angekommen ist.</p>
+    <label class="check"><input type="checkbox" id="incPhotos" checked> Fotos mitspeichern</label>
+    <p class="small" id="prepInfo" style="margin:6px 0 10px">Sicherung wird vorbereitet …</p>
+    <div class="row">
+      <button class="amber" id="btnSave">Spielstand sichern</button>
+    </div>
+    <div class="result" data-result="save"></div>
+    <label class="check"><input type="checkbox" id="saveConfirmed"> Die Datei liegt im Ordner „Breakout“ der Dateien-App.</label>
+  </section>
+
+  <section class="card" id="t-load">
+    <h2><span class="num">7</span>Spielstand laden (nach Datenverlust) <span class="badge" data-badge="load">offen</span></h2>
+    <p class="hint">Simuliert einen verlorenen Spielstand: erst „Spieldaten löschen“, dann die Sicherung aus dem Ordner „Breakout“ laden. Fotos und Beschriftung müssen danach wieder da sein.</p>
+    <div class="row">
+      <button class="danger" id="btnWipe">Spieldaten löschen</button>
+      <button id="btnLoad">Sicherung laden</button>
+      <input id="loadIn" type="file" accept=".json,application/json,text/plain" hidden>
+    </div>
+    <div class="result" data-result="load"></div>
+    <div id="loadPreview"></div>
+  </section>
+
+  <section class="card" id="t-export">
+    <h2><span class="num">8</span>Protokoll für Excel exportieren <span class="badge" data-badge="export">offen</span></h2>
+    <p class="hint">So kommt später das Evaluationsprotokoll zur Lehrkraft: als CSV-Datei über das Teilen-Menü (z. B. AirDrop) oder über die Zwischenablage zum Einfügen in Excel.</p>
+    <div class="row">
+      <button id="btnCsv">Protokoll als Datei teilen</button>
+      <button class="secondary" id="btnClip">Protokoll kopieren</button>
+    </div>
+    <div class="result" data-result="export"></div>
+    <details style="margin-top:10px"><summary>Protokoll ansehen</summary><pre id="logView"></pre></details>
+  </section>
+
+  <section class="card" id="t-result">
+    <h2>Ergebnis</h2>
+    <p class="hint">Diese Übersicht bitte kopieren und an Claude schicken – sie enthält keine Fotos und keine Namen.</p>
+    <table id="summary"></table>
+    <div class="row" style="margin-top:12px">
+      <button class="amber" id="btnCopyResult">Ergebnis kopieren</button>
+      <button class="secondary" id="btnShareResult">Ergebnis teilen</button>
+    </div>
+    <div class="result" id="resultMsg"></div>
+    <details style="margin-top:10px"><summary>Gerätedaten</summary><pre id="deviceView"></pre></details>
+  </section>
+
+  <section class="card">
+    <h2>Zurücksetzen</h2>
+    <p class="hint">Löscht alle Testdaten auf diesem iPad (Fotos, Beschriftung, Protokoll, Testergebnisse).</p>
+    <button class="danger" id="btnResetAll">Alles zurücksetzen</button>
+  </section>
+
+  <footer>ORION Systemtest · <span id="ver"></span></footer>
+</div>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var VERSION = 'test-v1 (05.11.2026)';
+  var APP_ID = 'orion-breakout-test';
+  var TAGS = ['Kernschatten', 'Halbschatten', 'Übergangsschatten'];
+  var TESTS = [
+    ['install', 'Installation Home-Bildschirm'],
+    ['offline', 'Start ohne Internet'],
+    ['storage', 'Daten nach Neustart erhalten'],
+    ['camera', 'Fotos aufnehmen'],
+    ['drag', 'Foto beschriften (Ziehen)'],
+    ['save', 'Spielstand sichern (Teilen-Menü)'],
+    ['load', 'Spielstand laden'],
+    ['export', 'Protokoll für Excel']
+  ];
+  var LABEL = { ok: '✓ bestanden', warn: '⚠ prüfen', fail: '✗ fehlgeschlagen', open: 'offen' };
+
+  function $(s) { return document.querySelector(s); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function nowDE(d) { d = d || new Date(); return d.toLocaleDateString('de-DE') + ' ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
+  function kb(n) { return n < 1024 * 1024 ? Math.round(n / 1024) + ' KB' : (n / 1024 / 1024).toFixed(1) + ' MB'; }
+
+  // ---------- localStorage (immer mit try/catch) ----------
+  var LS = {
+    get: function (k, d) { try { var v = localStorage.getItem('orion_' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set: function (k, v) { try { localStorage.setItem('orion_' + k, JSON.stringify(v)); return true; } catch (e) { return false; } },
+    del: function (k) { try { localStorage.removeItem('orion_' + k); } catch (e) {} }
+  };
+  var lsWorks = LS.set('probe', 1) && LS.get('probe', 0) === 1;
+
+  // ---------- IndexedDB für Fotos ----------
+  var dbPromise = null;
+  function idb() {
+    if (dbPromise) return dbPromise;
+    dbPromise = new Promise(function (res, rej) {
+      if (!('indexedDB' in window)) { rej(new Error('IndexedDB fehlt')); return; }
+      var r = indexedDB.open('orion-test', 1);
+      r.onupgradeneeded = function () { r.result.createObjectStore('photos', { keyPath: 'id' }); };
+      r.onsuccess = function () { res(r.result); };
+      r.onerror = function () { rej(r.error); };
+    });
+    return dbPromise;
+  }
+  function tx(mode, fn) {
+    return idb().then(function (db) {
+      return new Promise(function (res, rej) {
+        var t = db.transaction('photos', mode); var st = t.objectStore('photos'); var out = fn(st);
+        t.oncomplete = function () { res(out && out.result !== undefined ? out.result : undefined); };
+        t.onerror = function () { rej(t.error); }; t.onabort = function () { rej(t.error); };
+      });
+    });
+  }
+  function photosAll() { return tx('readonly', function (st) { return st.getAll(); }).then(function (r) { return (r || []).sort(function (a, b) { return a.t - b.t; }); }); }
+  function photoPut(p) { return tx('readwrite', function (st) { return st.put(p); }); }
+  function photoDel(id) { return tx('readwrite', function (st) { return st.delete(id); }); }
+  function photosClear() { return tx('readwrite', function (st) { return st.clear(); }); }
+
+  // ---------- Zustand ----------
+  var results = LS.get('results', {});
+  var labels = LS.get('labels', {});
+  var log = LS.get('log', []);
+  var starts = LS.get('starts', []);
+
+  function team() { return $('#team').value || ''; }
+  function tablet() { return $('#tablet').value || ''; }
+  function addLog(ev, detail) {
+    log.push({ t: nowDE(), team: team(), tablet: tablet(), ev: ev, detail: detail || '' });
+    if (log.length > 500) log = log.slice(-500);
+    LS.set('log', log); renderLog(); schedulePrepare();
+  }
+  function setResult(key, status, note) {
+    results[key] = { status: status, note: note || '', t: nowDE() };
+    LS.set('results', results); renderResult(key); renderSummary();
+  }
+  function renderResult(key) {
+    var r = results[key] || { status: 'open' };
+    var b = document.querySelector('[data-badge="' + key + '"]');
+    if (b) { b.className = 'badge ' + (r.status === 'open' ? '' : r.status); b.textContent = LABEL[r.status] || 'offen'; }
+    var box = document.querySelector('[data-result="' + key + '"]');
+    if (box) {
+      if (r.note) { box.className = 'result show ' + r.status; box.textContent = r.note + (r.t ? '  (' + r.t + ')' : ''); }
+      else { box.className = 'result'; box.textContent = ''; }
+    }
+  }
+
+  // ---------- Umgebung erkennen ----------
+  var isStandalone = (window.navigator.standalone === true) || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  var isIPad = /iPad/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+  var swControlled = !!(navigator.serviceWorker && navigator.serviceWorker.controller);
+  var swState = 'unbekannt';
+  var cacheCount = null;
+  var storeInfo = { persisted: null, usage: null, quota: null };
+
+  function setChip(id, dotId, text, cls) { $(id).textContent = text; $(dotId).className = 'dot ' + (cls || ''); }
+  function renderChips() {
+    setChip('#chipMode', '#dotMode', isStandalone ? 'Home-Bildschirm-App' : 'im Browser-Tab', isStandalone ? 'ok' : 'warn');
+    setChip('#chipNet', '#dotNet', navigator.onLine ? 'online' : 'offline (Flugmodus)', navigator.onLine ? 'ok' : 'warn');
+    var swText = !('serviceWorker' in navigator) ? 'Offline-Speicher nicht verfügbar'
+      : swControlled ? 'Offline-Speicher bereit' + (cacheCount !== null ? ' (' + cacheCount + ' Dateien)' : '')
+      : 'Offline-Speicher: ' + swState;
+    setChip('#chipSw', '#dotSw', swText, !('serviceWorker' in navigator) ? 'fail' : swControlled ? 'ok' : 'warn');
+    var st = lsWorks ? 'Speicher ok' : 'Speicher gesperrt';
+    if (storeInfo.persisted === true) st += ' · dauerhaft';
+    setChip('#chipStore', '#dotStore', st, lsWorks ? 'ok' : 'fail');
+  }
+  window.addEventListener('online', function () { renderChips(); renderDevice(); });
+  window.addEventListener('offline', function () { renderChips(); renderDevice(); });
+
+  // Start protokollieren
+  starts.push({ t: nowDE(), online: navigator.onLine, standalone: isStandalone, sw: swControlled });
+  if (starts.length > 20) starts = starts.slice(-20);
+  LS.set('starts', starts);
+
+  function evalAutoTests() {
+    if (isStandalone) setResult('install', 'ok', 'Die App läuft als Home-Bildschirm-App.');
+    else if (!results.install || results.install.status !== 'ok') {
+      results.install = { status: 'open', note: isIPad ? 'Noch im Safari-Tab. Teilen → „Zum Home-Bildschirm“, dann über das Symbol starten.' : 'Kein iPad erkannt – bitte auf einem Schul-iPad testen.', t: '' };
+      renderResult('install');
+    }
+    var offlineStarts = starts.filter(function (s) { return !s.online; });
+    if (offlineStarts.length) {
+      var last = offlineStarts[offlineStarts.length - 1];
+      setResult('offline', last.standalone ? 'ok' : 'warn',
+        'Start ohne Internet am ' + last.t + (last.standalone ? ' als Home-Bildschirm-App.' : ' – aber im Browser-Tab, bitte über das Symbol wiederholen.'));
+    } else if (!results.offline) {
+      results.offline = { status: 'open', note: 'Noch kein Start ohne Internet. ' + (swControlled ? 'Offline-Speicher ist bereit – jetzt Flugmodus testen.' : 'Erst einmal mit Internet über das Symbol starten.'), t: '' };
+      renderResult('offline');
+    }
+    var homeStarts = starts.filter(function (s) { return s.standalone; }).length;
+    if (starts.length >= 2 && lsWorks) {
+      setResult('storage', homeStarts >= 2 ? 'ok' : 'warn',
+        'Gespeicherte Daten über ' + starts.length + ' Starts erhalten (davon ' + homeStarts + ' als Home-Bildschirm-App).' +
+        (team() ? ' Team „' + team() + '“ ist noch eingetragen.' : ''));
+    } else if (!lsWorks) {
+      setResult('storage', 'fail', 'Der Browser lässt kein Speichern zu (privater Modus oder gesperrt).');
+    }
+    renderStarts();
+  }
+  function renderStarts() {
+    var rows = starts.slice().reverse().map(function (s) {
+      return '<tr><td>' + esc(s.t) + '</td><td>' + (s.online ? 'online' : '<b>offline</b>') + '</td><td>' + (s.standalone ? 'Home-Bildschirm' : 'Browser-Tab') + '</td><td>' + (s.sw ? 'aus Offline-Speicher' : '–') + '</td></tr>';
+    }).join('');
+    $('#startsTable').innerHTML = '<table><tr><th>Zeit</th><th>Netz</th><th>Modus</th><th>Geladen</th></tr>' + rows + '</table>';
+  }
+
+  // ---------- Service Worker ----------
+  if ('serviceWorker' in navigator) {
+    swState = 'wird eingerichtet …';
+    navigator.serviceWorker.register('./sw.js').then(function (reg) {
+      swState = reg.active ? 'eingerichtet, aktiv ab nächstem Start' : 'wird eingerichtet …';
+      renderChips();
+      navigator.serviceWorker.ready.then(function () {
+        if (!swControlled) { swState = 'eingerichtet, aktiv ab nächstem Start'; renderChips(); }
+      });
+    }).catch(function (e) { swState = 'Fehler: ' + e.message; renderChips(); renderDevice(); });
+    navigator.serviceWorker.addEventListener('message', function (ev) {
+      if (ev.data && ev.data.type === 'cache') { cacheCount = ev.data.count; renderChips(); renderDevice(); }
+    });
+    navigator.serviceWorker.addEventListener('controllerchange', function () { swControlled = true; renderChips(); });
+    if (navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage('status');
+  }
+
+  // ---------- Speicher ----------
+  function refreshStorage() {
+    if (!navigator.storage) { renderDevice(); return; }
+    var p1 = navigator.storage.persisted ? navigator.storage.persisted().then(function (v) { storeInfo.persisted = v; }).catch(function () {}) : Promise.resolve();
+    var p2 = navigator.storage.estimate ? navigator.storage.estimate().then(function (e) { storeInfo.usage = e.usage; storeInfo.quota = e.quota; }).catch(function () {}) : Promise.resolve();
+    Promise.all([p1, p2]).then(function () { renderChips(); renderDevice(); });
+  }
+  $('#btnPersist').addEventListener('click', function () {
+    if (!navigator.storage || !navigator.storage.persist) {
+      setResult('storage', results.storage && results.storage.status === 'ok' ? 'ok' : 'warn', 'Dauerhafter Speicher kann hier nicht angefordert werden (wird von dieser iPadOS-Version nicht angeboten).');
+      return;
+    }
+    navigator.storage.persist().then(function (granted) {
+      storeInfo.persisted = granted; addLog('speicher', granted ? 'dauerhaft gewährt' : 'nicht gewährt');
+      var cur = results.storage && results.storage.status === 'ok' ? 'ok' : 'warn';
+      setResult('storage', cur, granted ? 'Dauerhafter Speicher wurde gewährt.' : 'Dauerhafter Speicher wurde nicht gewährt – Home-Bildschirm-Apps sind meist trotzdem geschützt.');
+      refreshStorage();
+    });
+  });
+
+  // ---------- Team/Tablet ----------
+  $('#team').value = LS.get('team', '');
+  $('#tablet').value = LS.get('tablet', '');
+  $('#team').addEventListener('change', function () { LS.set('team', team()); addLog('anmeldung', 'Team ' + team()); });
+  $('#tablet').addEventListener('change', function () { LS.set('tablet', tablet()); addLog('anmeldung', 'Tablet ' + tablet()); });
+
+  // ---------- Fotos ----------
+  function loadImage(file) {
+    return new Promise(function (res, rej) {
+      var url = URL.createObjectURL(file); var img = new Image();
+      img.onload = function () { res({ img: img, url: url }); };
+      img.onerror = function () { URL.revokeObjectURL(url); rej(new Error('Bild nicht lesbar')); };
+      img.src = url;
+    });
+  }
+  function downscale(file) {
+    return loadImage(file).then(function (o) {
+      var w = o.img.naturalWidth, h = o.img.naturalHeight, max = 1280;
+      var s = Math.min(1, max / Math.max(w, h));
+      var c = document.createElement('canvas'); c.width = Math.round(w * s); c.height = Math.round(h * s);
+      c.getContext('2d').drawImage(o.img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(o.url);
+      var data = c.toDataURL('image/jpeg', 0.8);
+      return { dataUrl: data, w: c.width, h: c.height, bytes: Math.round(data.length * 0.75), origBytes: file.size };
+    });
+  }
+  function handleFiles(files, source) {
+    if (!files || !files.length) return;
+    var list = Array.prototype.slice.call(files);
+    var chain = Promise.resolve(); var saved = 0; var info = '';
+    list.forEach(function (f) {
+      chain = chain.then(function () { return downscale(f); }).then(function (r) {
+        var p = { id: 'p' + Date.now() + Math.random().toString(16).slice(2, 6), t: Date.now(), source: source, dataUrl: r.dataUrl, w: r.w, h: r.h, bytes: r.bytes };
+        info = r.w + '×' + r.h + ' px, ' + kb(r.bytes) + ' (Original ' + kb(r.origBytes) + ')';
+        saved++; return photoPut(p);
+      });
+    });
+    chain.then(function () {
+      addLog('foto', source + ': ' + saved + ' gespeichert');
+      setResult('camera', 'ok', saved + ' Foto(s) über „' + (source === 'kamera' ? 'Foto aufnehmen' : 'Aus Fotos wählen') + '“ gespeichert. Letztes: ' + info + '.');
+      return renderGallery();
+    }).catch(function (e) { setResult('camera', 'fail', 'Foto konnte nicht gespeichert werden: ' + e.message); });
+  }
+  $('#btnCam').addEventListener('click', function () { $('#camIn').click(); });
+  $('#btnLib').addEventListener('click', function () { $('#libIn').click(); });
+  $('#camIn').addEventListener('change', function (e) { handleFiles(e.target.files, 'kamera'); e.target.value = ''; });
+  $('#libIn').addEventListener('change', function (e) { handleFiles(e.target.files, 'mediathek'); e.target.value = ''; });
+
+  var lastPhoto = null;
+  function renderGallery() {
+    return photosAll().then(function (ps) {
+      lastPhoto = ps.length ? ps[ps.length - 1] : null;
+      $('#gallery').innerHTML = ps.map(function (p) {
+        return '<div class="ph"><img alt="Versuchsfoto" src="' + p.dataUrl + '"><button class="x" data-del="' + p.id + '" aria-label="Foto löschen">×</button>' +
+          '<div class="meta">' + esc(p.source) + ' · ' + kb(p.bytes) + '</div></div>';
+      }).join('');
+      Array.prototype.forEach.call(document.querySelectorAll('[data-del]'), function (b) {
+        b.addEventListener('click', function () { photoDel(b.getAttribute('data-del')).then(function () { addLog('foto', 'gelöscht'); renderGallery(); }); });
+      });
+      renderStage(); schedulePrepare();
+      if (ps.length && (!results.camera || results.camera.status === 'open')) setResult('camera', 'ok', ps.length + ' Foto(s) sind auf diesem iPad gespeichert.');
+      return ps;
+    }).catch(function (e) { setResult('camera', 'fail', 'Fotospeicher (IndexedDB) nicht nutzbar: ' + e.message); });
+  }
+
+  // ---------- Ziehen ----------
+  function renderStage() {
+    var stage = $('#stage');
+    var img = stage.querySelector('img');
+    if (lastPhoto) {
+      if (!img) { img = document.createElement('img'); img.alt = 'Letztes Foto'; stage.insertBefore(img, stage.firstChild); }
+      img.src = lastPhoto.dataUrl;
+      var em = stage.querySelector('.empty'); if (em) em.style.display = 'none';
+    } else if (img) { img.remove(); var em2 = stage.querySelector('.empty'); if (em2) em2.style.display = ''; }
+    renderTags();
+  }
+  function renderTags() {
+    var stage = $('#stage'), tray = $('#tray');
+    Array.prototype.forEach.call(document.querySelectorAll('.tag'), function (t) { t.remove(); });
+    TAGS.forEach(function (name) {
+      var el = document.createElement('div'); el.className = 'tag'; el.textContent = name; el.setAttribute('data-tag', name);
+      var pos = labels[name];
+      if (pos) { el.style.left = (pos.x * 100) + '%'; el.style.top = (pos.y * 100) + '%'; stage.appendChild(el); }
+      else tray.appendChild(el);
+      attachDrag(el);
+    });
+  }
+  function attachDrag(el) {
+    el.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      var name = el.getAttribute('data-tag');
+      var pid = e.pointerId;
+      el.classList.add('dragging'); document.body.appendChild(el);
+      el.style.left = e.clientX + 'px'; el.style.top = e.clientY + 'px';
+      function move(ev) { if (ev.pointerId !== pid) return; ev.preventDefault(); el.style.left = ev.clientX + 'px'; el.style.top = ev.clientY + 'px'; }
+      function up(ev) {
+        if (ev.pointerId !== pid) return;
+        document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); document.removeEventListener('pointercancel', up);
+        var r = $('#stage').getBoundingClientRect();
+        var inside = ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom;
+        if (inside && ev.type !== 'pointercancel') {
+          labels[name] = { x: (ev.clientX - r.left) / r.width, y: (ev.clientY - r.top) / r.height };
+        } else { delete labels[name]; }
+        LS.set('labels', labels); renderTags(); checkDrag(name, inside);
+      }
+      document.addEventListener('pointermove', move, { passive: false }); document.addEventListener('pointerup', up); document.addEventListener('pointercancel', up);
+    });
+  }
+  function checkDrag(name, placed) {
+    var n = TAGS.filter(function (t) { return labels[t]; }).length;
+    addLog('beschriften', name + (placed ? ' platziert' : ' zurückgelegt') + ' (' + n + '/3)');
+    if (n === 3) setResult('drag', 'ok', 'Alle drei Begriffe liegen auf dem Foto. Ziehen mit dem Finger funktioniert.');
+    else setResult('drag', n ? 'warn' : 'open', n + ' von 3 Begriffen platziert.');
+  }
+  $('#btnResetTags').addEventListener('click', function () { labels = {}; LS.set('labels', labels); renderTags(); setResult('drag', 'open', ''); });
+
+  // ---------- Sicherung vorbereiten (vorab, damit das Teilen-Menü sofort öffnet) ----------
+  var prepared = null, prepTimer = null;
+  function slug(s) { return (s || 'OhneTeam').replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/Ä/g, 'Ae').replace(/Ö/g, 'Oe').replace(/Ü/g, 'Ue').replace(/ß/g, 'ss').replace(/[^A-Za-z0-9]+/g, ''); }
+  function fileName(ext) {
+    var d = new Date();
+    return 'Breakout_Test_' + slug(team()) + '_Tablet' + pad(tablet() || 0) + '_' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + '_' + pad(d.getHours()) + '-' + pad(d.getMinutes()) + '.' + ext;
+  }
+  function schedulePrepare() { clearTimeout(prepTimer); prepTimer = setTimeout(prepareBackup, 250); }
+  function prepareBackup() {
+    var inc = $('#incPhotos').checked;
+    return (inc ? photosAll() : Promise.resolve([])).catch(function () { return []; }).then(function (ps) {
+      var data = { app: APP_ID, version: VERSION, team: team(), tablet: tablet(), savedAt: new Date().toISOString(),
+        state: { labels: labels, log: log }, photos: ps };
+      var json = JSON.stringify(data);
+      prepared = { json: json, name: fileName('json'), photos: ps.length };
+      $('#prepInfo').textContent = 'Bereit: ' + prepared.name + ' · ' + kb(json.length) + ' · ' + ps.length + ' Foto(s)';
+    });
+  }
+  $('#incPhotos').addEventListener('change', schedulePrepare);
+  $('#team').addEventListener('change', schedulePrepare);
+  $('#tablet').addEventListener('change', schedulePrepare);
+
+  function pickShareFile(content, name, types) {
+    if (typeof File === 'undefined' || !navigator.canShare) return null;
+    for (var i = 0; i < types.length; i++) {
+      try { var f = new File([content], name, { type: types[i] }); if (navigator.canShare({ files: [f] })) return { file: f, type: types[i] }; } catch (e) {}
+    }
+    return null;
+  }
+  function downloadFallback(content, name, type) {
+    var url = URL.createObjectURL(new Blob([content], { type: type }));
+    var a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 4000);
+  }
+
+  $('#btnSave').addEventListener('click', function () {
+    if (!prepared) { setResult('save', 'warn', 'Sicherung war noch nicht fertig vorbereitet – bitte gleich noch einmal tippen.'); prepareBackup(); return; }
+    var p = prepared;
+    var pick = pickShareFile(p.json, p.name, ['application/json', 'text/plain']);
+    if (pick && navigator.share) {
+      // Direkt im Tipp-Ereignis aufrufen – sonst blockiert Safari das Teilen-Menü
+      navigator.share({ files: [pick.file] }).then(function () {
+        addLog('sicherung', 'geteilt: ' + p.name + ' (' + kb(p.json.length) + ')');
+        setResult('save', 'ok', 'Teilen-Menü abgeschlossen (Dateityp ' + pick.type + ', ' + kb(p.json.length) + ', ' + p.photos + ' Foto(s)). Bitte unten bestätigen, ob die Datei im Ordner liegt.');
+      }).catch(function (e) {
+        if (e && e.name === 'AbortError') { addLog('sicherung', 'abgebrochen'); setResult('save', 'warn', 'Teilen-Menü wurde abgebrochen – die App erkennt das. (Für die Sticker-Vergabe heißt das: Akt bleibt gesperrt, bis gesichert wurde.)'); }
+        else { addLog('sicherung', 'Fehler ' + (e && e.name)); setResult('save', 'fail', 'Teilen fehlgeschlagen: ' + (e && e.name) + ' – ' + (e && e.message)); }
+      });
+    } else {
+      downloadFallback(p.json, p.name, 'application/json');
+      addLog('sicherung', 'Download-Ersatz: ' + p.name);
+      setResult('save', 'warn', 'Teilen mit Dateien wird hier nicht unterstützt – stattdessen wurde ein Download gestartet. Bitte prüfen, ob die Datei in „Downloads“ oder im Ordner landet.');
+    }
+  });
+  $('#saveConfirmed').checked = !!LS.get('saveConfirmed', false);
+  $('#saveConfirmed').addEventListener('change', function () {
+    LS.set('saveConfirmed', this.checked); addLog('sicherung', this.checked ? 'Datei im Ordner bestätigt' : 'Bestätigung zurückgenommen'); renderSummary();
+  });
+
+  // ---------- Laden ----------
+  var pendingLoad = null;
+  $('#btnLoad').addEventListener('click', function () { $('#loadIn').click(); });
+  $('#loadIn').addEventListener('change', function (e) {
+    var f = e.target.files && e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var data = JSON.parse(reader.result);
+        if (!data || data.app !== APP_ID) throw new Error('Das ist keine Sicherung dieser App.');
+        pendingLoad = data;
+        var when = data.savedAt ? new Date(data.savedAt).toLocaleString('de-DE') : '?';
+        $('#loadPreview').innerHTML = '<div class="result show">Gefunden: <b>' + esc(f.name) + '</b><br>Team „' + esc(data.team || '–') + '“, Tablet ' + esc(data.tablet || '–') + ', gesichert am ' + esc(when) + ', ' + (data.photos ? data.photos.length : 0) + ' Foto(s).' +
+          '<div class="row" style="margin-top:10px"><button id="btnRestore">Wiederherstellen</button></div></div>';
+        $('#btnRestore').addEventListener('click', restore);
+      } catch (err) { setResult('load', 'fail', 'Datei konnte nicht gelesen werden: ' + err.message); }
+    };
+    reader.onerror = function () { setResult('load', 'fail', 'Datei konnte nicht geöffnet werden.'); };
+    reader.readAsText(f);
+  });
+  function restore() {
+    var d = pendingLoad; if (!d) return;
+    var st = d.state || {};
+    labels = st.labels || {}; LS.set('labels', labels);
+    log = (st.log || []).concat([{ t: nowDE(), team: d.team, tablet: d.tablet, ev: 'laden', detail: 'Sicherung vom ' + d.savedAt + ' wiederhergestellt' }]); LS.set('log', log);
+    $('#team').value = d.team || ''; LS.set('team', d.team || '');
+    $('#tablet').value = d.tablet || ''; LS.set('tablet', d.tablet || '');
+    var ps = d.photos || [];
+    photosClear().then(function () { return Promise.all(ps.map(photoPut)); }).then(function () {
+      pendingLoad = null; $('#loadPreview').innerHTML = '';
+      setResult('load', 'ok', 'Wiederhergestellt: ' + ps.length + ' Foto(s), ' + Object.keys(labels).length + ' Beschriftung(en), ' + log.length + ' Protokollzeilen.');
+      renderLog(); return renderGallery();
+    }).catch(function (e) { setResult('load', 'fail', 'Wiederherstellen fehlgeschlagen: ' + e.message); });
+  }
+  $('#btnWipe').addEventListener('click', function () {
+    if (!window.confirm('Fotos, Beschriftung, Protokoll und Team-Angaben auf diesem iPad löschen? Die Testergebnisse bleiben erhalten.')) return;
+    labels = {}; LS.set('labels', labels); log = []; LS.set('log', log);
+    LS.del('team'); LS.del('tablet'); $('#team').value = ''; $('#tablet').value = '';
+    photosClear().then(function () { renderLog(); renderGallery(); setResult('load', 'open', 'Spieldaten gelöscht. Jetzt „Sicherung laden“ tippen.'); });
+  });
+
+  // ---------- Protokoll-Export ----------
+  function csv() {
+    var head = ['Zeit', 'Team', 'Tablet', 'Ereignis', 'Detail'];
+    var q = function (v) { v = String(v == null ? '' : v); return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    return '﻿' + [head].concat(log.map(function (l) { return [l.t, l.team, l.tablet, l.ev, l.detail]; })).map(function (r) { return r.map(q).join(';'); }).join('\r\n');
+  }
+  function tsv() {
+    return ['Zeit\tTeam\tTablet\tEreignis\tDetail'].concat(log.map(function (l) { return [l.t, l.team, l.tablet, l.ev, l.detail].map(function (v) { return String(v || '').replace(/\t/g, ' '); }).join('\t'); })).join('\n');
+  }
+  function renderLog() { $('#logView').textContent = tsv(); }
+  $('#btnCsv').addEventListener('click', function () {
+    var content = csv(); var name = fileName('csv').replace('Breakout_Test_', 'Protokoll_');
+    var pick = pickShareFile(content, name, ['text/csv', 'text/plain']);
+    if (pick && navigator.share) {
+      navigator.share({ files: [pick.file] }).then(function () { setResult('export', 'ok', 'CSV-Datei über das Teilen-Menü weitergegeben (' + log.length + ' Zeilen, Typ ' + pick.type + ').'); })
+        .catch(function (e) { setResult('export', e && e.name === 'AbortError' ? 'warn' : 'fail', e && e.name === 'AbortError' ? 'Teilen-Menü abgebrochen.' : 'Teilen fehlgeschlagen: ' + (e && e.message)); });
+    } else { downloadFallback(content, name, 'text/csv'); setResult('export', 'warn', 'Teilen mit Dateien nicht unterstützt – Download-Ersatz gestartet.'); }
+  });
+  $('#btnClip').addEventListener('click', function () {
+    if (!navigator.clipboard || !navigator.clipboard.writeText) { setResult('export', 'fail', 'Zwischenablage nicht verfügbar.'); return; }
+    navigator.clipboard.writeText(tsv()).then(function () {
+      var cur = results.export && results.export.status === 'ok';
+      setResult('export', 'ok', (cur ? results.export.note + ' · ' : '') + 'Protokoll in die Zwischenablage kopiert – in Excel einfach einfügen.');
+    }).catch(function (e) { setResult('export', 'fail', 'Kopieren fehlgeschlagen: ' + e.message); });
+  });
+
+  // ---------- Ergebnis ----------
+  function summaryText() {
+    var lines = ['ORION Systemtest – Ergebnis', 'Version: ' + VERSION, 'Datum: ' + nowDE(), ''];
+    TESTS.forEach(function (t, i) {
+      var r = results[t[0]] || { status: 'open' };
+      lines.push((i + 1) + '. ' + t[1] + ': ' + (LABEL[r.status] || 'offen') + (r.note ? ' – ' + r.note : ''));
+    });
+    lines.push('   Datei im Ordner bestätigt: ' + (LS.get('saveConfirmed', false) ? 'ja' : 'nein'));
+    lines.push(''); lines.push(deviceText());
+    return lines.join('\n');
+  }
+  function renderSummary() {
+    var rows = TESTS.map(function (t, i) {
+      var r = results[t[0]] || { status: 'open' };
+      return '<tr><td>' + (i + 1) + '</td><td>' + esc(t[1]) + '</td><td><span class="badge ' + (r.status === 'open' ? '' : r.status) + '" style="margin:0">' + (LABEL[r.status] || 'offen') + '</span></td></tr>';
+    }).join('');
+    $('#summary').innerHTML = '<tr><th>#</th><th>Test</th><th>Status</th></tr>' + rows +
+      '<tr><td></td><td>Datei im Ordner „Breakout“ bestätigt</td><td>' + (LS.get('saveConfirmed', false) ? '<span class="badge ok" style="margin:0">ja</span>' : '<span class="badge" style="margin:0">noch nicht</span>') + '</td></tr>';
+  }
+  function deviceText() {
+    var v = (navigator.userAgent.match(/Version\/([\d.]+)/) || [])[1];
+    return [
+      'Gerät: ' + (isIPad ? 'iPad' : 'kein iPad erkannt') + (v ? ' · Safari/iPadOS ' + v : ''),
+      'Modus: ' + (isStandalone ? 'Home-Bildschirm-App' : 'Browser-Tab'),
+      'Netz: ' + (navigator.onLine ? 'online' : 'offline'),
+      'Offline-Speicher: ' + (('serviceWorker' in navigator) ? (swControlled ? 'aktiv' : swState) : 'nicht verfügbar') + (cacheCount !== null ? ' (' + cacheCount + ' Dateien)' : ''),
+      'Speicher: ' + (lsWorks ? 'ok' : 'gesperrt') + (storeInfo.usage != null ? ' · belegt ' + kb(storeInfo.usage) + ' von ' + kb(storeInfo.quota) : '') + (storeInfo.persisted != null ? ' · dauerhaft: ' + (storeInfo.persisted ? 'ja' : 'nein') : ''),
+      'Teilen mit Dateien: ' + (navigator.canShare ? 'vorhanden' : 'fehlt') + ' · Zwischenablage: ' + (navigator.clipboard ? 'vorhanden' : 'fehlt'),
+      'Bildschirm: ' + window.innerWidth + '×' + window.innerHeight + ' (Pixelfaktor ' + window.devicePixelRatio + ')',
+      'Starts gesamt: ' + starts.length,
+      'Browserkennung: ' + navigator.userAgent
+    ].join('\n');
+  }
+  function renderDevice() { $('#deviceView').textContent = deviceText(); }
+  function msg(text, cls) { var m = $('#resultMsg'); m.className = 'result show ' + (cls || 'ok'); m.textContent = text; }
+  $('#btnCopyResult').addEventListener('click', function () {
+    var text = summaryText();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { msg('Ergebnis kopiert – jetzt im Chat mit Claude einfügen.'); })
+        .catch(function () { msg('Kopieren nicht möglich – bitte „Ergebnis teilen“ verwenden.', 'warn'); });
+    } else msg('Kopieren nicht möglich – bitte „Ergebnis teilen“ verwenden.', 'warn');
+  });
+  $('#btnShareResult').addEventListener('click', function () {
+    var text = summaryText();
+    if (navigator.share) navigator.share({ title: 'ORION Systemtest', text: text }).catch(function () {});
+    else msg('Teilen nicht verfügbar – bitte „Ergebnis kopieren“ verwenden.', 'warn');
+  });
+
+  $('#btnResetAll').addEventListener('click', function () {
+    if (!window.confirm('Wirklich alle Testdaten auf diesem iPad löschen?')) return;
+    ['results', 'labels', 'log', 'starts', 'team', 'tablet', 'saveConfirmed'].forEach(LS.del);
+    photosClear().catch(function () {}).then(function () { location.reload(); });
+  });
+
+  // ---------- Start ----------
+  $('#ver').textContent = VERSION;
+  TESTS.forEach(function (t) { renderResult(t[0]); });
+  renderChips(); renderLog(); renderSummary(); renderDevice();
+  addLog('start', (isStandalone ? 'Home-Bildschirm' : 'Browser-Tab') + ', ' + (navigator.onLine ? 'online' : 'offline'));
+  evalAutoTests();
+  refreshStorage();
+  renderGallery().then(function () { if (TAGS.filter(function (t) { return labels[t]; }).length === 3 && (!results.drag || results.drag.status !== 'ok')) setResult('drag', 'ok', 'Alle drei Begriffe liegen auf dem Foto.'); });
+  prepareBackup();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+ORION SYSTEMTEST – ANLEITUNG
+=============================
+
+Die Testseite prüft auf einem Schul-iPad, ob alles funktioniert, was die
+Breakout-App später braucht: Installation auf dem Home-Bildschirm, Start ohne
+Internet, gespeicherte Daten, Kamera, Begriffe auf ein Foto ziehen, Spielstand
+sichern und laden (Dateien-App) und Protokoll-Export für Excel.
+
+Dateien, die hochgeladen werden müssen (alle in denselben Ordner):
+  index.html, sw.js, manifest.webmanifest, icon-180.png, icon-192.png, icon-512.png
+Diese Anleitung muss nicht mit hochgeladen werden.
+
+
+TEIL A – EINMAL ONLINE STELLEN (Beispiel GitHub Pages, kostenlos)
+----------------------------------------------------------------
+Es läuft dabei kein Programm und kein Server, den du betreuen musst.
+Hochgeladen wird nur das leere Spiel; Schülerdaten bleiben auf den iPads.
+
+1. Auf https://github.com ein kostenloses Konto anlegen.
+2. Oben rechts auf „+“ → „New repository“.
+   Name: z. B. orion-test · Sichtbarkeit: Public · „Create repository“.
+3. Auf der neuen Seite „uploading an existing file“ anklicken
+   (oder „Add file“ → „Upload files“).
+   Die sechs Dateien (nicht den Ordner) hineinziehen → unten „Commit changes“.
+4. „Settings“ → links „Pages“ → unter „Branch“: main und „/ (root)“ wählen → „Save“.
+5. Nach 1–2 Minuten steht dort die Adresse, z. B.
+   https://DEIN-BENUTZERNAME.github.io/orion-test/
+
+Alternative: Webspace der Schule (Systembetreuung fragen). Wichtig ist nur,
+dass die Adresse mit https:// beginnt und alle Dateien im selben Ordner liegen.
+
+
+TEIL B – AUF DEM IPAD TESTEN (ca. 10 Minuten)
+---------------------------------------------
+Vorbereitung:
+  • Dateien-App öffnen → „Auf meinem iPad“ → neuen Ordner „Breakout“ anlegen.
+
+Mit Internet:
+  1. Safari öffnen (nicht Chrome) und die Adresse aus Teil A aufrufen.
+  2. Teilen-Symbol → „Zum Home-Bildschirm“ → „Hinzufügen“.
+  3. Safari schließen und die App über das neue Symbol „ORION-Test“ starten.
+  4. Oben muss nach kurzer Zeit „Offline-Speicher bereit“ stehen.
+  5. Team und Tablet-Nummer wählen.
+  6. Test 4: „Foto aufnehmen“ (Kamera erlauben) und „Aus Fotos wählen“ testen.
+  7. Test 5: Die drei Begriffe mit dem Finger auf das Foto ziehen.
+  8. Test 6: „Spielstand sichern“ → „In Dateien sichern“ → Ordner „Breakout“
+     → „Sichern“. Danach in der Dateien-App nachsehen und das Häkchen setzen.
+  9. Test 8: „Protokoll als Datei teilen“ (z. B. AirDrop an dich) und
+     „Protokoll kopieren“ (z. B. in Notizen einfügen).
+
+Ohne Internet:
+ 10. App ganz schließen: im App-Umschalter nach oben wegwischen.
+ 11. Flugmodus einschalten (WLAN ebenfalls aus).
+ 12. App wieder über das Symbol öffnen → Test 2 und 3 werden automatisch geprüft.
+ 13. Test 7: „Spieldaten löschen“ → „Sicherung laden“ → Datei aus „Breakout“
+     wählen → „Wiederherstellen“. Foto und Begriffe müssen wieder da sein.
+
+Ergebnis:
+ 14. Ganz unten „Ergebnis kopieren“ und den Text im Chat an Claude schicken.
+     Er enthält keine Fotos und keine Namen.
+
+Wenn möglich auf zwei verschiedenen iPads testen (unterschiedliche iPadOS-Versionen).
+
+
+WENN ETWAS NICHT KLAPPT
+-----------------------
+  • „Zum Home-Bildschirm“ fehlt im Teilen-Menü: vermutlich durch die
+    Geräteverwaltung der Schule gesperrt → Systembetreuung fragen.
+  • Kein „In Dateien sichern“ im Teilen-Menü: bitte im Ergebnis notieren.
+  • App startet im Flugmodus nicht: vorher einmal mit Internet über das
+    Symbol öffnen und warten, bis „Offline-Speicher bereit“ angezeigt wird.
+  • Alles neu beginnen: ganz unten „Alles zurücksetzen“.
